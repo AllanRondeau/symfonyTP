@@ -1,18 +1,39 @@
-
 services:
-###> doctrine/doctrine-bundle ###
-  database:
+  app:
+    build:
+      args:
+        SYSTEM_PROCESSOR: x64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
-      - "5432"
-###< doctrine/doctrine-bundle ###
+      - "80:80"
+      - "443:443"
 
-###> symfony/mailer ###
-  mailer:
-    image: axllent/mailpit
+  db:
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 20s
+      retries: 5
+      start_period: 60s
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
-      - "1025"
-      - "8025"
+      - "8080:80"
     environment:
-      MP_SMTP_AUTH_ACCEPT_ANY: 1
-      MP_SMTP_AUTH_ALLOW_INSECURE: 1
-###< symfony/mailer ###
+      UPLOAD_LIMIT: 512M
+
+  mailcatcher:
+    image: sj26/mailcatcher:latest
+    ports:
+      - "1080:1080"
+
+volumes:
+  socket_dir:
