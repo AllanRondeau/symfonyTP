@@ -7,9 +7,11 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
+#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class User
 {
     #[ORM\Id]
@@ -25,6 +27,9 @@ class User
 
     #[ORM\Column(length: 255)]
     private ?string $password = null;
+
+    #[ORM\Column(type: 'json')]
+    private array $roles = [];
 
     #[ORM\Column(enumType: UserAccountStatusEnum::class)]
     private ?UserAccountStatusEnum $accountStatus = null;
@@ -86,6 +91,16 @@ class User
         $this->password = $password;
 
         return $this;
+    }
+
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): void
+    {
+        $this->roles = $roles;
     }
 
     public function getAccountStatus(): ?UserAccountStatusEnum
